@@ -1,0 +1,21 @@
+Connect-AzureAD
+ 
+$deletionTresholdDays=180
+$dt = (Get-Date).AddDays(-180)
+$Devices = Get-AzureADDevice -All:$true | Where {($.ApproximateLastLogonTimeStamp -le $dt) -and ($.ApproximateLastLogonTimeStamp -ne $null)}
+foreach ($Device in $Devices) {
+Write-Host($Device.DisplayName)
+}
+ 
+ 
+Write-Host("Total number of stale devices are :",$Devices.count)
+$ConfirmDeletion=$null
+while ($ConfirmDeletion -notmatch "[y|n]"){
+    $ConfirmDeletion = Read-Host "Delete all Azure AD devices which haven't contacted your tenant since $deletionTresholdDays days (Y/N)"
+}
+if ($ConfirmDeletion -eq "y"){
+    foreach ($Device in $Devices) {
+    Write-Host("Deleting ",$Device.DisplayName)
+    Remove-AzureADDevice -ObjectId $Device.ObjectId
+    }
+}
